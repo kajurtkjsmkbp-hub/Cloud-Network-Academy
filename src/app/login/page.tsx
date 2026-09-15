@@ -1,0 +1,169 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { BookOpen, GraduationCap, Lock, Mail, Users, AlertCircle } from "lucide-react";
+
+export default function LoginPage() {
+  const [isLogin, setIsLogin] = useState(true);
+  const [role, setRole] = useState<"student" | "teacher">("student");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  const router = useRouter();
+
+  // Initialize local storage dummy db on load
+  useEffect(() => {
+    if (!localStorage.getItem("lms_users")) {
+      localStorage.setItem("lms_users", JSON.stringify([]));
+    }
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    setTimeout(() => {
+      try {
+        const users = JSON.parse(localStorage.getItem("lms_users") || "[]");
+
+        if (isLogin) {
+          const user = users.find((u: any) => u.email === email && u.password === password);
+          if (user) {
+            localStorage.setItem("lms_currentUser", JSON.stringify(user));
+            router.push(user.role === "teacher" ? "/dashboard/teacher" : "/dashboard/student");
+          } else {
+            setError("Email atau password salah.");
+          }
+        } else {
+          const existingUser = users.find((u: any) => u.email === email);
+          if (existingUser) {
+            setError("Email sudah terdaftar.");
+          } else {
+            const newUser = { email, password, role, completedModules: [] };
+            users.push(newUser);
+            localStorage.setItem("lms_users", JSON.stringify(users));
+            localStorage.setItem("lms_currentUser", JSON.stringify(newUser));
+            
+            router.push(role === "teacher" ? "/dashboard/teacher" : "/dashboard/student");
+          }
+        }
+      } catch (err: any) {
+        setError("Terjadi kesalahan.");
+      } finally {
+        setLoading(false);
+      }
+    }, 500); // Fake network delay
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 selection:bg-blue-500/30">
+      <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm mb-4 shadow-inner">
+            <BookOpen className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">CloudNetwork Academy</h1>
+          <p className="text-blue-100 text-sm">Masuk Tanpa Setup Server (Mode Lokal)</p>
+        </div>
+
+        <div className="p-8">
+          {!isLogin && (
+            <div className="flex justify-center mb-6">
+              <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg inline-flex">
+                <button 
+                  type="button"
+                  onClick={() => setRole("student")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${role === "student" ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+                >
+                  <GraduationCap size={18} /> Siswa
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setRole("teacher")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${role === "teacher" ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+                >
+                  <Users size={18} /> Guru
+                </button>
+              </div>
+            </div>
+          )}
+
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-6 text-center">
+            {isLogin ? "Masuk ke Akun Anda" : "Daftar Akun Baru"}
+          </h2>
+
+          {error && (
+            <div className="mb-4 p-3 bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-lg flex items-start gap-2 text-rose-600 dark:text-rose-400 text-sm">
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+              <p>{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="admin@sekolah.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="bebas_saja"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? "Memproses..." : (isLogin ? "Masuk" : "Daftar")}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {isLogin ? "Belum punya akun? " : "Sudah punya akun? "}
+              <button 
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError("");
+                }}
+                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+              >
+                {isLogin ? "Daftar sekarang" : "Masuk di sini"}
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
