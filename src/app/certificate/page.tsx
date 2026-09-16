@@ -12,9 +12,22 @@ export default function CertificatePage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    const isPreview = window.location.search.includes("preview=true");
     const currentUserStr = localStorage.getItem("lms_currentUser");
+    
     if (currentUserStr) {
       const parsed = JSON.parse(currentUserStr);
+      
+      // Jika mode preview diaktifkan (khusus guru)
+      if (isPreview && parsed.role === "teacher") {
+        setUser({ 
+          email: 'contoh@siswa.com', 
+          fullName: 'Nama Siswa Contoh',
+          completedModules: new Array(mikrotikModules.length).fill('modul')
+        });
+        return;
+      }
+
       if (parsed.role !== "student") {
         router.push("/dashboard/teacher");
       } else if (!parsed.completedModules || parsed.completedModules.length < mikrotikModules.length) {
@@ -72,7 +85,7 @@ export default function CertificatePage() {
           </div>
           
           <h1 className="text-4xl md:text-5xl font-serif text-slate-900 font-bold mb-2 uppercase tracking-widest text-amber-900">Sertifikat Kelulusan</h1>
-          <p className="text-lg text-slate-500 mb-8 uppercase tracking-widest">CloudNetwork Academy</p>
+          <p className="text-lg text-slate-500 mb-8 uppercase tracking-widest">CloudNetwork Virtual Lab - MikroTik Edition</p>
           
           <p className="text-slate-600 italic mb-4">Diberikan secara resmi kepada:</p>
           

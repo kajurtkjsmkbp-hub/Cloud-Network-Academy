@@ -344,7 +344,13 @@ export default function TeacherDashboard() {
             <h1 className="font-bold text-lg text-slate-900 dark:text-white">Dashboard Guru</h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-600 dark:text-slate-400">{userEmail}</span>
+            <button 
+              onClick={() => window.open("/certificate?preview=true", "_blank")}
+              className="hidden sm:flex items-center gap-2 text-sm bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1.5 rounded-full font-medium transition-colors"
+            >
+              <Award size={16} /> Contoh Sertifikat
+            </button>
+            <span className="text-sm text-slate-600 dark:text-slate-400 hidden sm:block">{userEmail}</span>
             <button 
               onClick={handleLogout}
               className="flex items-center gap-2 text-sm text-rose-600 hover:text-rose-700 font-medium"
