@@ -292,6 +292,7 @@ function LabContent() {
           const code = data.charCodeAt(0);
           if (code === 27) return; // Ignore arrow keys/escape sequences to prevent breaking output
           
+          if (!modulData) return;
           const currentTask = modulData.labTasks[currentLabIdx];
           const expectedList = currentTask ? currentTask.expectedCommands : [];
 

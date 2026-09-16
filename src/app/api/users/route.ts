@@ -13,7 +13,7 @@ export async function GET() {
       }
     });
 
-    const parsedUsers = users.map((user) => ({
+    const parsedUsers = users.map((user: any) => ({
       ...user,
       completedModules: JSON.parse(user.completedModules || '[]')
     }));
