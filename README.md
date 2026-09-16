@@ -4,17 +4,17 @@ Aplikasi Learning Management System (LMS) berbasis Next.js interaktif, dirancang
 
 ## Fitur Utama
 - **20 Modul Terstruktur**: Kurikulum Jaringan "Kelas Berat" dari dasar hingga mahir.
-- **Terminal Interaktif**: Praktek sintaks MikroTik CLI langsung di browser.
+- **Terminal Interaktif**: Praktek sintaks MikroTik CLI langsung di browser dengan deteksi validasi sintaks secara *real-time* (Warna Hijau/Merah).
 - **Auto-grading System**: Penilaian kuis dan praktek seketika (real-time).
-- **Pemantauan & Rekam Jejak Detail**: Rekaman seluruh jawaban kuis dan perintah terminal yang bisa di-eksport ke PDF.
-- **Sertifikat Dinamis**: Terbuka dan bisa didownload saat semua 20 modul selesai dikerjakan.
-- **Sistem LocalStorage**: Database berbasis lokal (tanpa perlu setting server database yang rumit).
+- **Pemantauan & Rekam Jejak Detail**: Rekaman seluruh aktivitas belajar, riwayat login, skor kuis, dan perintah terminal yang bisa dipantau langsung oleh guru.
+- **Sertifikat Dinamis**: Terbuka dan bisa diunduh saat semua 20 modul selesai dikerjakan.
+- **Database Permanen (Prisma & SQLite)**: Data tersimpan secara aman dan tersentralisasi, tidak akan hilang walau siswa berganti komputer/browser.
 
 ---
 
-## 🚀 Panduan Instalasi Detail di LXC Proxmox
+## 🚀 Panduan Instalasi Detail di LXC Proxmox / VPS Linux
 
-Untuk menjalankan aplikasi ini secara 24 jam non-stop di server sekolah atau instansi, sangat disarankan menggunakan **LXC (Linux Container)** di Proxmox. Gunakan template **Ubuntu 22.04** atau **Debian 12** dengan alokasi minimal 1 Core CPU dan 1 GB RAM.
+Untuk menjalankan aplikasi ini secara 24 jam non-stop di server sekolah atau instansi, sangat disarankan menggunakan **LXC (Linux Container)** di Proxmox atau VPS. Gunakan template **Ubuntu 22.04 / 24.04** atau **Debian 12** dengan alokasi minimal 1 Core CPU dan 1 GB RAM.
 
 Buka menu **Console** pada LXC Anda, lalu ikuti langkah-langkah detail berikut secara berurutan:
 
@@ -31,8 +31,8 @@ apt install -y nodejs
 ```
 *Pastikan Node.js sudah terinstal dengan mengecek: `node -v` dan `npm -v`.*
 
-### 3. Install PM2 (Untuk menjalankan aplikasi di background)
-PM2 akan menjaga aplikasi tetap hidup meskipun server di-restart atau console ditutup.
+### 3. Install PM2 (Untuk menjaga aplikasi tetap hidup)
+PM2 akan menjalankan aplikasi di *background* sehingga tidak mati saat console/SSH ditutup.
 ```bash
 npm install -g pm2
 ```
@@ -43,10 +43,12 @@ git clone https://github.com/kajurtkjsmkbp-hub/Cloud-Network-Academy.git
 cd Cloud-Network-Academy
 ```
 
-### 5. Install Dependencies & Build Aplikasi
-Proses ini akan mengunduh semua paket yang dibutuhkan dan menyusun (build) aplikasi untuk tahap produksi.
+### 5. Install Dependencies, Generate Database, & Build Aplikasi
+Langkah ini sangat **KRUSIAL**. Karena kita menggunakan database Prisma, kita harus menyesuaikan konfigurasi database dengan OS Linux dan memberikan hak akses agar *user* bisa menulis file database.
 ```bash
 npm install
+npx prisma generate
+sudo chmod -R 777 prisma/
 npm run build
 ```
 
@@ -69,7 +71,7 @@ http://<ALAMAT_IP_LXC_ANDA>:3000
 
 ## 🔄 Cara Memperbarui (Update) Aplikasi di LXC
 
-Jika terdapat pembaruan kode terbaru di GitHub (misalnya ada perbaikan bug atau penambahan fitur), Anda **tidak perlu** menginstal ulang LXC dari awal. Cukup ikuti langkah berikut di **Console LXC** Anda:
+Jika terdapat pembaruan kode terbaru di GitHub, Anda **tidak perlu** menginstal ulang LXC dari awal. Cukup ikuti langkah berikut di **Console LXC** Anda:
 
 **1. Masuk ke folder aplikasi:**
 ```bash
@@ -81,9 +83,12 @@ cd Cloud-Network-Academy
 git pull origin main
 ```
 
-**3. Install pembaruan paket (jika ada) dan Build ulang:**
+**3. Install pembaruan paket & Sesuaikan Database (PENTING):**
+Jika tahap ini dilewati, aplikasi bisa *crash* (Internal Server Error) saat Anda mencoba Login.
 ```bash
 npm install
+npx prisma generate
+sudo chmod -R 777 prisma/
 npm run build
 ```
 
@@ -96,7 +101,7 @@ Aplikasi Anda kini sudah ter-update ke versi terbaru!
 
 ---
 
-## 💻 Instalasi Lokal (Development / Uji Coba)
+## 💻 Instalasi Lokal (Development / Uji Coba di PC/Windows)
 
 Jika Anda hanya ingin memodifikasi atau menjalankan secara lokal di PC/Laptop (Windows/Mac):
 
@@ -106,9 +111,10 @@ Jika Anda hanya ingin memodifikasi atau menjalankan secara lokal di PC/Laptop (W
    cd Cloud-Network-Academy
    ```
 
-2. Install NPM packages:
+2. Install NPM packages & Generate Prisma:
    ```bash
    npm install
+   npx prisma generate
    ```
 
 3. Jalankan development server:
