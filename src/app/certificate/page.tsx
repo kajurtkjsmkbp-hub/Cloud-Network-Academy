@@ -128,17 +128,32 @@ export default function CertificatePage() {
               
               {/* Footer - Tanda Tangan */}
               <div className="w-full flex justify-between items-end px-2 md:px-8 mt-1">
-                <div className="text-center flex flex-col items-center">
-                  <div className="h-10 md:h-14 flex items-end justify-center mb-1">
+                <div className="text-center flex flex-col items-center relative">
+                  
+                  {/* STEMPEL CSS MIKROTIK ACADEMY */}
+                  <div className="absolute opacity-[0.65] mix-blend-multiply -rotate-12 pointer-events-none z-0" style={{ left: '10%', top: '-30%' }}>
+                    <div className="w-20 h-20 md:w-28 md:h-28 rounded-full border-[3px] md:border-[4px] border-indigo-700 flex items-center justify-center relative">
+                      <div className="absolute inset-[2px] md:inset-1 border border-indigo-700 rounded-full"></div>
+                      <div className="absolute inset-[4px] md:inset-2 border-[0.5px] border-indigo-700 border-dashed rounded-full"></div>
+                      <div className="text-center transform -rotate-6">
+                        <p className="text-[6px] md:text-[8px] font-bold text-indigo-700 uppercase tracking-widest">MikroTik</p>
+                        <p className="text-[10px] md:text-[14px] font-black text-indigo-800 uppercase leading-none my-0.5">ACADEMY</p>
+                        <div className="w-[80%] mx-auto border-t-[1.5px] border-indigo-700 my-[2px]"></div>
+                        <p className="text-[5px] md:text-[7px] font-bold text-indigo-700 uppercase tracking-wider">Instructor</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="h-10 md:h-14 flex items-end justify-center mb-1 relative z-10">
                     {settings.signatureImage ? (
                       <img src={settings.signatureImage} alt="Tanda Tangan" className="h-10 md:h-12 object-contain" />
                     ) : (
                       <span className="font-['Brush_Script_MT',cursive,serif] text-xl md:text-3xl text-slate-700 opacity-80 -rotate-6">Ttd.</span>
                     )}
                   </div>
-                  <div className="border-b-2 border-slate-400 w-28 md:w-40 mb-1"></div>
-                  <p className="text-[8px] md:text-xs font-bold text-slate-800 uppercase tracking-wider">{settings.instructorName}</p>
-                  <p className="text-[7px] md:text-[9px] text-slate-500 font-semibold">Instruktur Utama</p>
+                  <div className="border-b-2 border-slate-400 w-28 md:w-40 mb-1 relative z-10"></div>
+                  <p className="text-[8px] md:text-xs font-bold text-slate-800 uppercase tracking-wider relative z-10">{settings.instructorName}</p>
+                  <p className="text-[7px] md:text-[9px] text-slate-500 font-semibold relative z-10">Instruktur Utama</p>
                 </div>
                 
                 <div className="text-center flex flex-col items-center">
