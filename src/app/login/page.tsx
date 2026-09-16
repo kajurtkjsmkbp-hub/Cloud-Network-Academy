@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, GraduationCap, Lock, Mail, Users, AlertCircle } from "lucide-react";
+import { BookOpen, GraduationCap, Lock, Mail, Users, AlertCircle, UserCircle } from "lucide-react";
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [role, setRole] = useState<"student" | "teacher">("student");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,7 +18,14 @@ export default function LoginPage() {
   // Initialize local storage dummy db on load
   useEffect(() => {
     if (!localStorage.getItem("lms_users")) {
-      localStorage.setItem("lms_users", JSON.stringify([]));
+      const defaultAdmin = [{
+        email: "guru@sekolah.com",
+        password: "admin",
+        role: "teacher",
+        fullName: "Guru Utama",
+        status: "active"
+      }];
+      localStorage.setItem("lms_users", JSON.stringify(defaultAdmin));
     }
   }, []);
 
@@ -33,8 +41,12 @@ export default function LoginPage() {
         if (isLogin) {
           const user = users.find((u: any) => u.email === email && u.password === password);
           if (user) {
-            localStorage.setItem("lms_currentUser", JSON.stringify(user));
-            router.push(user.role === "teacher" ? "/dashboard/teacher" : "/dashboard/student");
+            if (user.status === "suspended") {
+              setError("Akun Anda dinonaktifkan sementara. Hubungi guru.");
+            } else {
+              localStorage.setItem("lms_currentUser", JSON.stringify(user));
+              router.push(user.role === "teacher" ? "/dashboard/teacher" : "/dashboard/student");
+            }
           } else {
             setError("Email atau password salah.");
           }
@@ -43,7 +55,14 @@ export default function LoginPage() {
           if (existingUser) {
             setError("Email sudah terdaftar.");
           } else {
-            const newUser = { email, password, role, completedModules: [] };
+            const newUser = { 
+              email, 
+              password, 
+              role,
+              fullName: fullName || email.split("@")[0], 
+              completedModules: [],
+              status: "active" 
+            };
             users.push(newUser);
             localStorage.setItem("lms_users", JSON.stringify(users));
             localStorage.setItem("lms_currentUser", JSON.stringify(newUser));
@@ -72,22 +91,10 @@ export default function LoginPage() {
 
         <div className="p-8">
           {!isLogin && (
-            <div className="flex justify-center mb-6">
-              <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg inline-flex">
-                <button 
-                  type="button"
-                  onClick={() => setRole("student")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${role === "student" ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
-                >
-                  <GraduationCap size={18} /> Siswa
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setRole("teacher")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${role === "teacher" ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
-                >
-                  <Users size={18} /> Guru
-                </button>
+            <div className="mb-6">
+              <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg flex items-center justify-center gap-2 text-blue-700 dark:text-blue-300 text-sm font-medium">
+                <GraduationCap size={18} />
+                <span>Pendaftaran Akun Siswa Baru</span>
               </div>
             </div>
           )}
@@ -104,6 +111,26 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nama Lengkap</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <UserCircle className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="Budi Santoso"
+                    required={!isLogin}
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
               <div className="relative">

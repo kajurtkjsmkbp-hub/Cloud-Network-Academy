@@ -18,6 +18,15 @@ export default function StudentDashboard() {
       if (parsed.role !== "student") {
         router.push("/dashboard/teacher");
       } else {
+        // Double check status in lms_users db in case teacher suspended them while logged in
+        const allUsers = JSON.parse(localStorage.getItem("lms_users") || "[]");
+        const freshUser = allUsers.find((u: any) => u.email === parsed.email);
+        if (freshUser && freshUser.status === "suspended") {
+          localStorage.removeItem("lms_currentUser");
+          alert("Akun Anda telah dinonaktifkan sementara oleh Guru.");
+          router.push("/login");
+          return;
+        }
         setUser(parsed);
       }
     } else {
@@ -53,7 +62,9 @@ export default function StudentDashboard() {
             <Star size={16} className="text-amber-500 fill-amber-500" />
             <span className="text-sm font-bold text-amber-700 dark:text-amber-400">{totalPoints} Poin</span>
           </div>
-          <span className="text-sm text-slate-600 dark:text-slate-400 hidden sm:block">{user.email}</span>
+          <span className="text-sm font-bold text-slate-800 dark:text-white hidden sm:block">
+            {user.fullName || user.email.split('@')[0]}
+          </span>
           <button 
             onClick={handleLogout}
             className="flex items-center gap-2 text-sm text-rose-600 hover:text-rose-700 font-medium"
@@ -65,6 +76,14 @@ export default function StudentDashboard() {
 
       <main className="max-w-6xl mx-auto p-6 mt-2">
         
+        {/* Welcome Banner */}
+        <div className="mb-6 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 md:p-8 text-white shadow-lg">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2">Selamat Datang, {user.fullName || user.email.split('@')[0]}! 👋</h2>
+          <p className="text-blue-100 max-w-2xl text-sm md:text-base">
+            Siap untuk melanjutkan pembelajaran jaringan Anda? Pilih modul di bawah ini dan tingkatkan pemahaman praktis Anda mengenai RouterOS MikroTik.
+          </p>
+        </div>
+
         {/* Certificate Banner */}
         <div className={`mb-8 p-6 rounded-2xl shadow-sm border flex flex-col md:flex-row items-center justify-between transition-all ${isAllCompleted ? 'bg-gradient-to-r from-amber-100 to-amber-50 dark:from-slate-900 dark:to-slate-800 border-amber-300 shadow-amber-500/10' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
           <div className="flex items-center gap-6 mb-4 md:mb-0">
@@ -124,6 +143,10 @@ export default function StudentDashboard() {
           })}
         </div>
       </main>
+
+      <footer className="mt-4 pb-8 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="font-medium">CloudNetwork Virtual Lab - MikroTik Edition - <span className="font-bold text-slate-700 dark:text-slate-300">Adiningtyas Yuli Purwanto, S.Kom</span></p>
+      </footer>
     </div>
   );
 }

@@ -85,11 +85,46 @@ function LabContent() {
     if (selectedAnswer === null || !modulData) return;
     
     const currentQuiz = modulData.quizzes[currentQuizIdx];
-    if (selectedAnswer === currentQuiz.correctAnswer) {
+    const isCorrect = selectedAnswer === currentQuiz.correctAnswer;
+
+    // Simpan history jawaban
+    if (user) {
+      const historyItem = {
+        modulId: modulData.id,
+        modulTitle: modulData.title,
+        questionIdx: currentQuizIdx,
+        questionText: currentQuiz.question,
+        selectedOption: currentQuiz.options[selectedAnswer],
+        correctOption: currentQuiz.options[currentQuiz.correctAnswer],
+        isCorrect: isCorrect
+      };
+
+      const updatedUser = { ...user };
+      if (!updatedUser.quizHistory) updatedUser.quizHistory = [];
+      
+      const existingIdx = updatedUser.quizHistory.findIndex((h:any) => h.modulId === modulData.id && h.questionIdx === currentQuizIdx);
+      if (existingIdx >= 0) {
+        updatedUser.quizHistory[existingIdx] = historyItem;
+      } else {
+        updatedUser.quizHistory.push(historyItem);
+      }
+      
+      localStorage.setItem("lms_currentUser", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      const users = JSON.parse(localStorage.getItem("lms_users") || "[]");
+      const index = users.findIndex((u: any) => u.email === updatedUser.email);
+      if (index !== -1) {
+        users[index] = updatedUser;
+        localStorage.setItem("lms_users", JSON.stringify(users));
+      }
+    }
+
+    if (isCorrect) {
       setQuizFeedback({ correct: true, msg: "Tepat sekali! +5 Poin" });
       savePointsAndProgress(5);
     } else {
-      setQuizFeedback({ correct: false, msg: "Jawaban salah. Tidak ada poin." });
+      setQuizFeedback({ correct: false, msg: `Jawaban salah. Yang benar adalah: ${currentQuiz.options[currentQuiz.correctAnswer]}` });
     }
 
     setTimeout(() => {
@@ -115,6 +150,33 @@ function LabContent() {
       // Basic regex or direct match for flexibility
       return cleanCmd === expected.toLowerCase() || cleanCmd.replace(/\s+/g, ' ') === expected.toLowerCase();
     });
+
+    // Simpan history lab (terminal)
+    if (user && cmd.trim() !== "") {
+      const historyItem = {
+        modulId: modulData.id,
+        modulTitle: modulData.title,
+        taskIdx: currentLabIdx,
+        instruction: currentTask.instruction,
+        typedCommand: cmd.trim(),
+        isCorrect: isCorrect,
+        time: new Date().toLocaleTimeString('id-ID')
+      };
+
+      const updatedUser = { ...user };
+      if (!updatedUser.labHistory) updatedUser.labHistory = [];
+      updatedUser.labHistory.push(historyItem);
+      
+      localStorage.setItem("lms_currentUser", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      const users = JSON.parse(localStorage.getItem("lms_users") || "[]");
+      const index = users.findIndex((u: any) => u.email === updatedUser.email);
+      if (index !== -1) {
+        users[index] = updatedUser;
+        localStorage.setItem("lms_users", JSON.stringify(users));
+      }
+    }
 
     if (isCorrect) {
       if (currentTask.mockOutput) {

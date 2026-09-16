@@ -27,18 +27,33 @@ export default function CertificatePage() {
     }
   }, [router]);
 
+  const handleDownload = () => {
+    if (user) {
+      const updatedUser = { ...user, hasDownloadedCertificate: true };
+      setUser(updatedUser);
+      localStorage.setItem("lms_currentUser", JSON.stringify(updatedUser));
+      
+      const allUsers = JSON.parse(localStorage.getItem("lms_users") || "[]");
+      const updatedUsers = allUsers.map((u: any) => 
+        u.email === user.email ? updatedUser : u
+      );
+      localStorage.setItem("lms_users", JSON.stringify(updatedUsers));
+    }
+    window.print();
+  };
+
   if (!user) {
     return <div className="min-h-screen bg-slate-50 dark:bg-slate-950"></div>;
   }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 flex flex-col items-center justify-center">
-      <div className="w-full max-w-4xl mb-6 flex justify-between items-center">
+      <div className="w-full max-w-4xl mb-6 flex justify-between items-center print:hidden">
         <Link href="/dashboard/student" className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-colors">
           <ChevronLeft size={20} /> Kembali ke Dashboard
         </Link>
         <button 
-          onClick={() => window.print()}
+          onClick={handleDownload}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-lg transition-colors"
         >
           <Download size={18} /> Unduh PDF
