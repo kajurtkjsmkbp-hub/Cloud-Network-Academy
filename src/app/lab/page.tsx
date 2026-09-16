@@ -36,6 +36,27 @@ function LabContent() {
 
   const [alert, setAlert] = useState<{show: boolean, msg: string, type: 'success' | 'info'}>({show: false, msg: '', type: 'success'});
 
+  // Keamanan: Mencegah Copy, Paste, Cut, Context Menu dan Drag
+  useEffect(() => {
+    const preventDefault = (e: Event) => e.preventDefault();
+    
+    document.addEventListener("contextmenu", preventDefault);
+    document.addEventListener("copy", preventDefault);
+    document.addEventListener("cut", preventDefault);
+    document.addEventListener("paste", preventDefault);
+    document.addEventListener("dragstart", preventDefault);
+    document.addEventListener("drop", preventDefault);
+    
+    return () => {
+      document.removeEventListener("contextmenu", preventDefault);
+      document.removeEventListener("copy", preventDefault);
+      document.removeEventListener("cut", preventDefault);
+      document.removeEventListener("paste", preventDefault);
+      document.removeEventListener("dragstart", preventDefault);
+      document.removeEventListener("drop", preventDefault);
+    }
+  }, []);
+
   useEffect(() => {
     const currentUserStr = localStorage.getItem("lms_currentUser");
     if (!currentUserStr) {
@@ -273,7 +294,7 @@ function LabContent() {
   if (!modulData) return <div className="p-8 text-white">Memuat modul...</div>;
 
   return (
-    <div className="flex flex-col h-screen bg-slate-950 text-slate-300 font-sans">
+    <div className="flex flex-col h-screen bg-slate-950 text-slate-300 font-sans select-none">
       <header className="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center z-20">
         <div className="flex items-center gap-4">
           <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2 rounded-lg">
