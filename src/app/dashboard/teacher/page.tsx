@@ -37,7 +37,11 @@ export default function TeacherDashboard() {
   const loadData = () => {
     const settingsStr = localStorage.getItem("lms_settings");
     if (settingsStr) {
-      setSettings(JSON.parse(settingsStr));
+      const parsedSettings = JSON.parse(settingsStr);
+      setSettings({
+        instructorName: parsedSettings.instructorName || "Adiningtyas Yuli Purwanto, S.Kom",
+        signatureImage: parsedSettings.signatureImage || ""
+      });
     }
     
     const currentUserStr = localStorage.getItem("lms_currentUser");
