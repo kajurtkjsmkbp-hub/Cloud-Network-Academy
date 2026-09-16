@@ -353,44 +353,44 @@ function LabContent() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-950 text-slate-300 font-sans select-none">
-      <header className="bg-slate-900 border-b border-slate-800 p-4 flex justify-between items-center z-20">
-        <div className="flex items-center gap-4">
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2 rounded-lg">
-            <Server size={22} className="text-white" />
+      <header className="bg-slate-900 border-b border-slate-800 p-3 lg:p-4 flex justify-between items-center z-20">
+        <div className="flex items-center gap-2 lg:gap-4">
+          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-1.5 lg:p-2 rounded-lg hidden sm:block">
+            <Server size={22} className="text-white w-4 h-4 lg:w-[22px] lg:h-[22px]" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-white">CloudNetwork <span className="text-blue-400">Academy</span></h1>
-            <p className="text-xs text-slate-500 font-medium">{modulData.title}</p>
+            <h1 className="font-bold text-sm lg:text-lg text-white">CloudNetwork <span className="text-blue-400">Academy</span></h1>
+            <p className="text-[10px] lg:text-xs text-slate-500 font-medium truncate max-w-[120px] lg:max-w-none">{modulData.title}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-full">
-            <Star size={18} className="text-amber-500 fill-amber-500" />
-            <span className="text-amber-500 font-bold">{points} Poin</span>
+        <div className="flex items-center gap-2 lg:gap-6">
+          <div className="flex items-center gap-1 lg:gap-2 bg-amber-500/10 border border-amber-500/20 px-2 lg:px-4 py-1.5 lg:py-2 rounded-full">
+            <Star size={14} className="text-amber-500 fill-amber-500 w-3 h-3 lg:w-[18px] lg:h-[18px]" />
+            <span className="text-amber-500 font-bold text-xs lg:text-base">{points} <span className="hidden sm:inline">Poin</span></span>
           </div>
           <button 
             onClick={() => router.push("/dashboard/student")}
-            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2 rounded-lg font-medium transition-all"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 lg:px-5 py-1.5 lg:py-2 rounded-lg font-medium text-xs lg:text-base transition-all"
           >
-            Tutup Modul
+            Tutup <span className="hidden sm:inline">Modul</span>
           </button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden p-4 gap-4 relative">
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden p-2 lg:p-4 gap-2 lg:gap-4 relative">
         {alert.show && (
-          <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 font-bold animate-bounce">
-            <CheckCircle size={20} />
+          <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50 bg-emerald-500 text-white px-4 lg:px-6 py-2 lg:py-3 rounded-full shadow-2xl flex items-center gap-2 font-bold animate-bounce text-sm lg:text-base">
+            <CheckCircle size={20} className="w-4 h-4 lg:w-5 lg:h-5" />
             {alert.msg}
           </div>
         )}
 
         {/* Panel Kiri (Konten) */}
-        <div className={`transition-all duration-500 ${stage === 'materi' ? 'w-1/2 max-w-2xl' : 'w-1/3 max-w-md'} bg-slate-900 border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-xl relative`}>
+        <div className={`transition-all duration-500 ${stage === 'lab' ? 'w-full lg:w-1/3 lg:max-w-md h-[40%] lg:h-full' : 'w-full lg:w-1/2 lg:max-w-2xl h-full'} bg-slate-900 border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-xl relative shrink-0`}>
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
           
-          <div className={`p-8 overflow-y-auto flex-1 prose prose-invert max-w-none ${stage === 'materi' ? 'prose-lg' : 'prose-sm'}`}>
+          <div className={`p-4 lg:p-8 overflow-y-auto flex-1 prose prose-invert max-w-none ${stage === 'materi' ? 'prose-base lg:prose-lg' : 'prose-sm'}`}>
             
             {/* STAGE: MATERI */}
             {stage === 'materi' && (
@@ -503,7 +503,7 @@ function LabContent() {
         </div>
 
         {/* Panel Kanan (Terminal) - Hanya aktif saat Lab */}
-        <div className={`flex-1 bg-slate-900 border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-2xl relative transition-opacity duration-500 ${stage === 'lab' ? 'opacity-100' : 'opacity-30 pointer-events-none filter blur-sm'}`}>
+        <div className={`flex-1 bg-slate-900 border border-slate-800 rounded-xl flex-col overflow-hidden shadow-2xl relative transition-opacity duration-500 ${stage === 'lab' ? 'opacity-100 flex' : 'opacity-0 lg:opacity-30 lg:pointer-events-none filter lg:blur-sm hidden lg:flex'}`}>
           <div className="bg-slate-950/80 px-4 py-3 flex items-center gap-3 border-b border-slate-800">
             <TerminalIcon size={14} className="text-slate-500" />
             <span className="font-mono text-xs text-slate-400">root@hq-router-01:~ (Interactive Grading Enabled)</span>
