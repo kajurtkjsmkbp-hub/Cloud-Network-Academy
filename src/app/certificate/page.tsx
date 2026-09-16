@@ -131,7 +131,7 @@ export default function CertificatePage() {
                 <div className="text-center flex flex-col items-center relative">
                   
                   {/* STEMPEL MIKROTIK ACADEMY */}
-                  <div className="absolute opacity-60 pointer-events-none z-0" style={{ left: '-5%', top: '-45%' }}>
+                  <div className="absolute opacity-60 pointer-events-none z-0" style={{ left: '-5%', top: '-30%' }}>
                     <svg viewBox="0 0 120 120" className="w-24 h-24 md:w-32 md:h-32 text-indigo-700 transform -rotate-12 mix-blend-multiply">
                       <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" strokeWidth="3" />
                       <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
@@ -144,14 +144,14 @@ export default function CertificatePage() {
                     </svg>
                   </div>
                   
-                  <div className="h-10 md:h-14 flex items-end justify-center mb-1 relative z-10">
+                  <div className="h-12 md:h-20 flex items-end justify-center mb-0 md:mb-1 relative z-10">
                     {settings.signatureImage ? (
-                      <img src={settings.signatureImage} alt="Tanda Tangan" className="h-12 md:h-16 object-contain mix-blend-multiply" />
+                      <img src={settings.signatureImage} alt="Tanda Tangan" className="h-16 md:h-24 object-contain mix-blend-multiply transform translate-y-1 md:translate-y-2 drop-shadow-sm" />
                     ) : (
-                      <span className="font-['Brush_Script_MT',cursive,serif] text-xl md:text-3xl text-slate-700 opacity-80 -rotate-6">Ttd.</span>
+                      <span className="font-['Brush_Script_MT',cursive,serif] text-2xl md:text-4xl text-slate-700 opacity-80 -rotate-6 transform translate-y-1">Ttd.</span>
                     )}
                   </div>
-                  <div className="border-b-2 border-slate-400 w-28 md:w-40 mb-1 relative z-10"></div>
+                  <div className="border-b-2 border-slate-400 w-32 md:w-48 mb-1 relative z-10"></div>
                   <p className="text-[8px] md:text-xs font-bold text-slate-800 uppercase tracking-wider relative z-10">{settings.instructorName}</p>
                   <p className="text-[7px] md:text-[9px] text-slate-500 font-semibold relative z-10">Instruktur Utama</p>
                 </div>
