@@ -68,10 +68,36 @@ function LabContent() {
     setPoints(parsed.points || 0);
 
     const data = mikrotikModules.find(m => m.id === modulId);
-    if (data) setModulData(data);
+    if (data) {
+      setModulData(data);
+      
+      // Auto-resume progress based on history
+      if (parsed) {
+        const qHistory = parsed.quizHistory || [];
+        const lHistory = parsed.labHistory || [];
+        
+        const answeredQuizzesCount = qHistory.filter((h: any) => h.modulId === modulId).length;
+        const correctLabs = lHistory.filter((h: any) => h.modulId === modulId && h.isCorrect);
+        // We use Set to count unique taskIdx that were correctly answered
+        const completedLabsCount = new Set(correctLabs.map((h: any) => h.taskIdx)).size;
+        
+        const totalQuizzes = data.quizzes.length;
+        const totalLabs = data.labTasks.length;
+
+        if (completedLabsCount >= totalLabs && totalLabs > 0) {
+          setStage('finished');
+        } else if (answeredQuizzesCount >= totalQuizzes && totalQuizzes > 0) {
+          setStage('lab');
+          setCurrentLabIdx(completedLabsCount);
+        } else if (answeredQuizzesCount > 0) {
+          setStage('quiz');
+          setCurrentQuizIdx(answeredQuizzesCount);
+        }
+      }
+    }
   }, [router, modulId]);
 
-  const savePointsAndProgress = (newPoints: number, isFinished: boolean = false) => {
+  const savePointsAndProgress = async (newPoints: number, isFinished: boolean = false) => {
     if (!user) return;
     let totalPoints = (user.points || 0) + newPoints;
     setPoints(totalPoints);
@@ -85,14 +111,22 @@ function LabContent() {
       }
     }
     
+    // Update local storage so UI feels fast
     localStorage.setItem("lms_currentUser", JSON.stringify(updatedUser));
     setUser(updatedUser);
     
-    const users = JSON.parse(localStorage.getItem("lms_users") || "[]");
-    const index = users.findIndex((u: any) => u.email === updatedUser.email);
-    if (index !== -1) {
-      users[index] = updatedUser;
-      localStorage.setItem("lms_users", JSON.stringify(users));
+    // Update server database
+    try {
+      await fetch(`/api/users/${user.email}/progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          points: updatedUser.points,
+          completedModules: updatedUser.completedModules
+        }),
+      });
+    } catch (e) {
+      console.error("Gagal menyimpan progress ke server", e);
     }
   };
 
@@ -120,6 +154,7 @@ function LabContent() {
         isCorrect: isCorrect
       };
 
+      // Keep in local UI for immediate rendering
       const updatedUser = { ...user };
       if (!updatedUser.quizHistory) updatedUser.quizHistory = [];
       
@@ -133,12 +168,12 @@ function LabContent() {
       localStorage.setItem("lms_currentUser", JSON.stringify(updatedUser));
       setUser(updatedUser);
       
-      const users = JSON.parse(localStorage.getItem("lms_users") || "[]");
-      const index = users.findIndex((u: any) => u.email === updatedUser.email);
-      if (index !== -1) {
-        users[index] = updatedUser;
-        localStorage.setItem("lms_users", JSON.stringify(users));
-      }
+      // Save to server
+      fetch(`/api/users/${user.email}/progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quizHistoryItem: historyItem }),
+      }).catch(e => console.error("Gagal simpan kuis", e));
     }
 
     if (isCorrect) {
@@ -184,6 +219,7 @@ function LabContent() {
         time: new Date().toLocaleTimeString('id-ID')
       };
 
+      // Keep in local UI for immediate rendering
       const updatedUser = { ...user };
       if (!updatedUser.labHistory) updatedUser.labHistory = [];
       updatedUser.labHistory.push(historyItem);
@@ -191,12 +227,12 @@ function LabContent() {
       localStorage.setItem("lms_currentUser", JSON.stringify(updatedUser));
       setUser(updatedUser);
       
-      const users = JSON.parse(localStorage.getItem("lms_users") || "[]");
-      const index = users.findIndex((u: any) => u.email === updatedUser.email);
-      if (index !== -1) {
-        users[index] = updatedUser;
-        localStorage.setItem("lms_users", JSON.stringify(users));
-      }
+      // Save to server
+      fetch(`/api/users/${user.email}/progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ labHistoryItem: historyItem }),
+      }).catch(e => console.error("Gagal simpan log terminal", e));
     }
 
     if (isCorrect) {
@@ -254,20 +290,41 @@ function LabContent() {
 
         term.onData((data: string) => {
           const code = data.charCodeAt(0);
+          if (code === 27) return; // Ignore arrow keys/escape sequences to prevent breaking output
+          
+          const currentTask = modulData.labTasks[currentLabIdx];
+          const expectedList = currentTask ? currentTask.expectedCommands : [];
+
+          const redrawCommand = (newCmd: string) => {
+            commandBuffer.current = newCmd;
+            // Clear current line and redraw prompt
+            term.write('\x1b[2K\r\x1b[1;32m[admin@MikroTik]\x1b[0m > ');
+            
+            if (newCmd === "") return;
+            
+            const cleanInput = newCmd.replace(/\s+/g, ' ').toLowerCase();
+            const isMatch = expectedList.some((cmd: string) => {
+               const cleanExpected = cmd.replace(/\s+/g, ' ').toLowerCase();
+               return cleanExpected.startsWith(cleanInput);
+            });
+            
+            // Green if it's on the right track, Red if it's totally wrong
+            const colorCode = isMatch ? "\x1b[32m" : "\x1b[31m";
+            term.write(colorCode + newCmd + "\x1b[0m");
+          };
+
           if (code === 13) { // Enter
             const executed = checkLabCommand(commandBuffer.current);
             if (!executed) {
               term.write("\r\n\x1b[1;32m[admin@MikroTik]\x1b[0m > ");
             }
             commandBuffer.current = "";
-          } else if (code === 127) { // Backspace
+          } else if (code === 127 || code === 8) { // Backspace
             if (commandBuffer.current.length > 0) {
-              commandBuffer.current = commandBuffer.current.slice(0, -1);
-              term.write("\b \b");
+              redrawCommand(commandBuffer.current.slice(0, -1));
             }
           } else {
-            commandBuffer.current += data;
-            term.write(data);
+            redrawCommand(commandBuffer.current + data);
           }
         });
 

@@ -15,18 +15,9 @@ export default function LoginPage() {
   
   const router = useRouter();
 
-  // Initialize local storage dummy db on load
+  // We no longer initialize localStorage users here, we use the DB.
   useEffect(() => {
-    if (!localStorage.getItem("lms_users")) {
-      const defaultAdmin = [{
-        email: "guru@sekolah.com",
-        password: "admin",
-        role: "teacher",
-        fullName: "Guru Utama",
-        status: "active"
-      }];
-      localStorage.setItem("lms_users", JSON.stringify(defaultAdmin));
-    }
+    // Optionally prefetch or check server status
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,48 +25,42 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      try {
-        const users = JSON.parse(localStorage.getItem("lms_users") || "[]");
-
-        if (isLogin) {
-          const user = users.find((u: any) => u.email === email && u.password === password);
-          if (user) {
-            if (user.status === "suspended") {
-              setError("Akun Anda dinonaktifkan sementara. Hubungi guru.");
-            } else {
-              localStorage.setItem("lms_currentUser", JSON.stringify(user));
-              router.push(user.role === "teacher" ? "/dashboard/teacher" : "/dashboard/student");
-            }
-          } else {
-            setError("Email atau password salah.");
-          }
+    try {
+      if (isLogin) {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+          setError(data.error || "Email atau password salah.");
         } else {
-          const existingUser = users.find((u: any) => u.email === email);
-          if (existingUser) {
-            setError("Email sudah terdaftar.");
-          } else {
-            const newUser = { 
-              email, 
-              password, 
-              role,
-              fullName: fullName || email.split("@")[0], 
-              completedModules: [],
-              status: "active" 
-            };
-            users.push(newUser);
-            localStorage.setItem("lms_users", JSON.stringify(users));
-            localStorage.setItem("lms_currentUser", JSON.stringify(newUser));
-            
-            router.push(role === "teacher" ? "/dashboard/teacher" : "/dashboard/student");
-          }
+          // Keep currentUser in localStorage for UI state, but source of truth is DB
+          localStorage.setItem("lms_currentUser", JSON.stringify(data.user));
+          router.push(data.user.role === "teacher" ? "/dashboard/teacher" : "/dashboard/student");
         }
-      } catch (err: any) {
-        setError("Terjadi kesalahan.");
-      } finally {
-        setLoading(false);
+      } else {
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, fullName, role }),
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+          setError(data.error || "Email sudah terdaftar.");
+        } else {
+          localStorage.setItem("lms_currentUser", JSON.stringify(data.user));
+          router.push(data.user.role === "teacher" ? "/dashboard/teacher" : "/dashboard/student");
+        }
       }
-    }, 500); // Fake network delay
+    } catch (err: any) {
+      setError("Terjadi kesalahan saat menghubungi server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

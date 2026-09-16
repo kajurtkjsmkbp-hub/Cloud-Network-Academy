@@ -18,21 +18,40 @@ export default function StudentDashboard() {
       if (parsed.role !== "student") {
         router.push("/dashboard/teacher");
       } else {
-        // Double check status in lms_users db in case teacher suspended them while logged in
-        const allUsers = JSON.parse(localStorage.getItem("lms_users") || "[]");
-        const freshUser = allUsers.find((u: any) => u.email === parsed.email);
-        if (freshUser && freshUser.status === "suspended") {
-          localStorage.removeItem("lms_currentUser");
-          alert("Akun Anda telah dinonaktifkan sementara oleh Guru.");
-          router.push("/login");
-          return;
-        }
-        setUser(parsed);
+        // Fetch fresh data from server
+        fetch(`/api/users/${parsed.email}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.error || !data.user) {
+              localStorage.removeItem("lms_currentUser");
+              router.push("/login");
+              return;
+            }
+            
+            const freshUser = data.user;
+            if (freshUser.status === "suspended") {
+              localStorage.removeItem("lms_currentUser");
+              alert("Akun Anda telah dinonaktifkan sementara oleh Guru.");
+              router.push("/login");
+              return;
+            }
+            
+            // Sync local storage with fresh DB data
+            localStorage.setItem("lms_currentUser", JSON.stringify(freshUser));
+            setUser(freshUser);
+            setLoading(false);
+          })
+          .catch(err => {
+            console.error("Gagal sinkronisasi", err);
+            // Fallback to local
+            setUser(parsed);
+            setLoading(false);
+          });
       }
     } else {
       router.push("/login");
+      setLoading(false);
     }
-    setLoading(false);
   }, [router]);
 
   const handleLogout = () => {

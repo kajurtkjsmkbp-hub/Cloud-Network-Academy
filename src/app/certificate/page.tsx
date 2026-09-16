@@ -55,12 +55,6 @@ export default function CertificatePage() {
       const updatedUser = { ...user, hasDownloadedCertificate: true };
       setUser(updatedUser);
       localStorage.setItem("lms_currentUser", JSON.stringify(updatedUser));
-      
-      const allUsers = JSON.parse(localStorage.getItem("lms_users") || "[]");
-      const updatedUsers = allUsers.map((u: any) => 
-        u.email === user.email ? updatedUser : u
-      );
-      localStorage.setItem("lms_users", JSON.stringify(updatedUsers));
     }
     window.print();
   };

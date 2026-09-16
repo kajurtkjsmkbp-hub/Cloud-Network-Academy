@@ -52,14 +52,22 @@ export default function TeacherDashboard() {
       } else {
         setUserEmail(parsed.email);
         
-        const allUsers = JSON.parse(localStorage.getItem("lms_users") || "[]");
-        setStudentsList(allUsers.filter((u: any) => u.role === "student"));
-        setTeachersList(allUsers.filter((u: any) => u.role === "teacher"));
+        fetch("/api/users")
+          .then(res => res.json())
+          .then(allUsers => {
+            setStudentsList(allUsers.filter((u: any) => u.role === "student"));
+            setTeachersList(allUsers.filter((u: any) => u.role === "teacher"));
+            setLoading(false);
+          })
+          .catch(err => {
+            console.error("Gagal mengambil data", err);
+            setLoading(false);
+          });
       }
     } else {
       router.push("/login");
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSaveSettings = () => {
@@ -120,25 +128,22 @@ export default function TeacherDashboard() {
     router.push("/login");
   };
 
-  const updateUsers = (newUsers: any[]) => {
-    localStorage.setItem("lms_users", JSON.stringify(newUsers));
-    setStudentsList(newUsers.filter((u: any) => u.role === "student"));
-    setTeachersList(newUsers.filter((u: any) => u.role === "teacher"));
-  };
-
-  const handleDelete = (email: string) => {
+  const handleDelete = async (email: string) => {
     if (email === userEmail) {
       alert("Anda tidak bisa menghapus akun Anda sendiri yang sedang aktif digunakan.");
       return;
     }
     if (confirm(`Apakah Anda yakin ingin menghapus akun ${email}? Data tidak dapat dikembalikan.`)) {
-      const allUsers = JSON.parse(localStorage.getItem("lms_users") || "[]");
-      const newUsers = allUsers.filter((u: any) => u.email !== email);
-      updateUsers(newUsers);
+      try {
+        await fetch(`/api/users/${email}`, { method: 'DELETE' });
+        loadData(); // Reload from server
+      } catch (err) {
+        alert("Gagal menghapus data.");
+      }
     }
   };
 
-  const handleToggleSuspend = (email: string, currentStatus: string) => {
+  const handleToggleSuspend = async (email: string, currentStatus: string) => {
     if (email === userEmail) {
       alert("Anda tidak bisa menonaktifkan akun Anda sendiri.");
       return;
@@ -147,11 +152,16 @@ export default function TeacherDashboard() {
     const actionText = isSuspended ? "mengaktifkan kembali" : "menonaktifkan sementara";
     
     if (confirm(`Apakah Anda yakin ingin ${actionText} akun ${email}?`)) {
-      const allUsers = JSON.parse(localStorage.getItem("lms_users") || "[]");
-      const newUsers = allUsers.map((u: any) => 
-        u.email === email ? { ...u, status: isSuspended ? "active" : "suspended" } : u
-      );
-      updateUsers(newUsers);
+      try {
+        await fetch(`/api/users/${email}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: isSuspended ? "active" : "suspended" })
+        });
+        loadData(); // Reload from server
+      } catch (err) {
+        alert("Gagal mengubah status.");
+      }
     }
   };
 
@@ -164,36 +174,45 @@ export default function TeacherDashboard() {
     });
   };
 
-  const saveEdit = (e: React.FormEvent) => {
+  const saveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const allUsers = JSON.parse(localStorage.getItem("lms_users") || "[]");
-    const newUsers = allUsers.map((u: any) => 
-      u.email === editModal.email ? { ...u, fullName: editModal.newName, password: editModal.newPassword } : u
-    );
-    updateUsers(newUsers);
-    setEditModal({ ...editModal, isOpen: false });
+    try {
+      await fetch(`/api/users/${editModal.email}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName: editModal.newName, password: editModal.newPassword })
+      });
+      loadData(); // Reload from server
+      setEditModal({ ...editModal, isOpen: false });
+    } catch (err) {
+      alert("Gagal mengedit data.");
+    }
   };
 
-  const handleAddTeacher = (e: React.FormEvent) => {
+  const handleAddTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
-    const allUsers = JSON.parse(localStorage.getItem("lms_users") || "[]");
-    
-    if (allUsers.find((u: any) => u.email === addTeacherModal.email)) {
-      alert("Email sudah digunakan.");
-      return;
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: addTeacherModal.email,
+          password: addTeacherModal.password,
+          fullName: addTeacherModal.fullName,
+          role: "teacher"
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Email sudah digunakan.");
+        return;
+      }
+      
+      loadData(); // Reload from server
+      setAddTeacherModal({isOpen: false, fullName: "", email: "", password: ""});
+    } catch (err) {
+      alert("Gagal menambahkan guru.");
     }
-    
-    const newTeacher = {
-      email: addTeacherModal.email,
-      password: addTeacherModal.password,
-      role: "teacher",
-      fullName: addTeacherModal.fullName,
-      status: "active"
-    };
-    
-    const newUsers = [...allUsers, newTeacher];
-    updateUsers(newUsers);
-    setAddTeacherModal({isOpen: false, fullName: "", email: "", password: ""});
   };
 
   if (loading) {
@@ -489,13 +508,62 @@ export default function TeacherDashboard() {
                         const isSuspended = student.status === "suspended";
                         const displayName = student.fullName || student.email.split("@")[0];
                         
-                        let currentPosition = "Belum Mulai";
+                        let currentPositionDetails = null;
+                        
                         if (completedCount === totalModules) {
-                          currentPosition = "Selesai Semua Modul";
-                        } else if (completedCount > 0) {
-                          currentPosition = `Mengerjakan Modul ${completedCount + 1}`;
+                          currentPositionDetails = (
+                            <div>
+                              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Selesai Semua Modul</span>
+                            </div>
+                          );
                         } else {
-                          currentPosition = "Mengerjakan Modul 1";
+                          const currentModul = mikrotikModules[completedCount];
+                          const qHistory = student.quizHistory || [];
+                          const lHistory = student.labHistory || [];
+                          
+                          const answeredQuizzesCount = qHistory.filter((h: any) => h.modulId === currentModul.id).length;
+                          const correctQuizzesCount = qHistory.filter((h: any) => h.modulId === currentModul.id && h.isCorrect).length;
+                          const quizScore = correctQuizzesCount * 5;
+                          
+                          const correctLabs = lHistory.filter((h: any) => h.modulId === currentModul.id && h.isCorrect);
+                          const completedLabsCount = new Set(correctLabs.map((h: any) => h.taskIdx)).size;
+                          
+                          // Calculate Lab Score for this module
+                          let labScore = 0;
+                          const uniqueLabTasks = new Set();
+                          for (const lab of correctLabs) {
+                            if (!uniqueLabTasks.has(lab.taskIdx)) {
+                              uniqueLabTasks.add(lab.taskIdx);
+                              const taskDef = currentModul.labTasks[lab.taskIdx];
+                              if (taskDef) {
+                                labScore += taskDef.points;
+                              }
+                            }
+                          }
+                          
+                          const totalQuizzes = currentModul.quizzes.length;
+                          const totalLabs = currentModul.labTasks.length;
+                          
+                          let maxQuizScore = totalQuizzes * 5;
+                          let maxLabScore = currentModul.labTasks.reduce((acc, t) => acc + t.points, 0);
+
+                          let stageInfo = "Materi Pembelajaran";
+                          if (answeredQuizzesCount >= totalQuizzes && totalQuizzes > 0) {
+                            stageInfo = `Sedang Soal Lab (${completedLabsCount}/${totalLabs})`;
+                          } else if (answeredQuizzesCount > 0) {
+                            stageInfo = `Sedang Kuis (${answeredQuizzesCount}/${totalQuizzes})`;
+                          }
+
+                          currentPositionDetails = (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Modul {completedCount + 1}: {stageInfo}</span>
+                              <div className="text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 p-2 rounded mt-1">
+                                <div className="font-semibold text-slate-600 dark:text-slate-400 mb-1 border-b border-slate-200 dark:border-slate-700 pb-1">Skor Modul {completedCount + 1}:</div>
+                                <div className="flex justify-between"><span>Kuis:</span> <span className="font-bold text-amber-600 dark:text-amber-400">{quizScore} / {maxQuizScore}</span></div>
+                                <div className="flex justify-between"><span>Lab:</span> <span className="font-bold text-blue-600 dark:text-blue-400">{labScore} / {maxLabScore}</span></div>
+                              </div>
+                            </div>
+                          );
                         }
                         
                         let finalStatus = (
@@ -537,12 +605,7 @@ export default function TeacherDashboard() {
                               </div>
                             </td>
                             <td className="p-4">
-                              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{currentPosition}</span>
-                              {completedCount > 0 && completedCount < totalModules && (
-                                <div className="text-xs text-slate-500 mt-1">
-                                  Telah lulus {completedCount} modul
-                                </div>
-                              )}
+                              {currentPositionDetails}
                             </td>
                             <td className="p-4">
                               <div className="flex items-center justify-between mb-1">
