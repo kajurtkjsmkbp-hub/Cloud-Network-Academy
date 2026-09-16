@@ -76,7 +76,40 @@ export default function TeacherDashboard() {
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setSettings({...settings, signatureImage: reader.result as string});
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+          
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            // Hitung seberapa putih pixel tersebut (0 = hitam, 255 = putih murni)
+            const brightness = (r + g + b) / 3;
+            
+            // Jika warnanya sangat terang (putih/abu-abu terang), kita buat transparan
+            if (brightness > 200) {
+              // Penghalusan tepi (anti-aliasing) untuk warna yang tidak 100% putih
+              const alpha = Math.max(0, 255 - (brightness - 200) * 5);
+              data[i + 3] = alpha; // Alpha channel (0 = transparan penuh)
+            }
+          }
+          
+          ctx.putImageData(imageData, 0, 0);
+          // Simpan kembali sebagai PNG transparan
+          const processedBase64 = canvas.toDataURL("image/png");
+          setSettings({...settings, signatureImage: processedBase64});
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
