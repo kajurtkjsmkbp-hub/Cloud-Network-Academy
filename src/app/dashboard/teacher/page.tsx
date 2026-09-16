@@ -11,7 +11,8 @@ export default function TeacherDashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [studentsList, setStudentsList] = useState<any[]>([]);
   const [teachersList, setTeachersList] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<"student" | "teacher">("student");
+  const [activeTab, setActiveTab] = useState<"student" | "teacher" | "settings">("student");
+  const [settings, setSettings] = useState<{instructorName: string, signatureImage: string}>({instructorName: "Adiningtyas Yuli Purwanto, S.Kom", signatureImage: ""});
   
   const [editModal, setEditModal] = useState<{isOpen: boolean, email: string, newName: string, newPassword: string}>({isOpen: false, email: "", newName: "", newPassword: ""});
   const [addTeacherModal, setAddTeacherModal] = useState({isOpen: false, fullName: "", email: "", password: ""});
@@ -34,6 +35,11 @@ export default function TeacherDashboard() {
   }, [studentToPrint]);
 
   const loadData = () => {
+    const settingsStr = localStorage.getItem("lms_settings");
+    if (settingsStr) {
+      setSettings(JSON.parse(settingsStr));
+    }
+    
     const currentUserStr = localStorage.getItem("lms_currentUser");
     if (currentUserStr) {
       const parsed = JSON.parse(currentUserStr);
@@ -50,6 +56,26 @@ export default function TeacherDashboard() {
       router.push("/login");
     }
     setLoading(false);
+  };
+
+  const handleSaveSettings = () => {
+    localStorage.setItem("lms_settings", JSON.stringify(settings));
+    alert("Pengaturan sertifikat berhasil disimpan!");
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Ukuran gambar terlalu besar! Maksimal 2MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSettings({...settings, signatureImage: reader.result as string});
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleLogout = () => {
@@ -377,6 +403,13 @@ export default function TeacherDashboard() {
               Manajemen Guru
               {activeTab === "teacher" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-t-full"></div>}
             </button>
+            <button 
+              onClick={() => setActiveTab("settings")} 
+              className={`px-4 py-3 font-semibold text-sm transition-colors relative flex items-center gap-2 ${activeTab === 'settings' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            >
+              <Settings size={16} /> Pengaturan Sertifikat
+              {activeTab === "settings" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 dark:bg-blue-400 rounded-t-full"></div>}
+            </button>
           </div>
 
           {activeTab === "student" && (
@@ -620,6 +653,66 @@ export default function TeacherDashboard() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "settings" && (
+            <div className="max-w-2xl mx-auto">
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-4">Pengaturan Desain Sertifikat</h3>
+              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Nama Instruktur Utama</label>
+                    <input 
+                      type="text" 
+                      value={settings.instructorName}
+                      onChange={(e) => setSettings({...settings, instructorName: e.target.value})}
+                      className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Contoh: Adiningtyas Yuli Purwanto, S.Kom"
+                    />
+                    <p className="text-xs text-slate-500 mt-2">Nama ini akan tercetak di bagian bawah kanan sertifikat kelulusan.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Upload Tanda Tangan Digital (Opsional)</label>
+                    <div className="flex items-start gap-6">
+                      <div className="flex-1">
+                        <input 
+                          type="file" 
+                          accept="image/png, image/jpeg, image/webp"
+                          onChange={handleImageUpload}
+                          className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                        <p className="text-xs text-slate-500 mt-2">Format: PNG transparan disarankan. Maksimal 2MB. Jika dikosongkan, sistem akan menggunakan tanda tangan font otomatis.</p>
+                      </div>
+                      
+                      {settings.signatureImage && (
+                        <div className="relative border-2 border-dashed border-slate-300 rounded-lg p-2 bg-slate-50 w-32 h-20 flex items-center justify-center">
+                          <img src={settings.signatureImage} alt="Pratinjau" className="max-w-full max-h-full object-contain" />
+                          <button 
+                            onClick={() => setSettings({...settings, signatureImage: ""})}
+                            className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 hover:bg-rose-600"
+                            title="Hapus gambar"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button 
+                      onClick={handleSaveSettings}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors"
+                    >
+                      Simpan Pengaturan
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
