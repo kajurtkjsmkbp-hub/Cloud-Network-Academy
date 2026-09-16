@@ -144,16 +144,16 @@ export default function CertificatePage() {
                     </svg>
                   </div>
                   
-                  <div className="h-12 md:h-20 flex items-end justify-center mb-0 md:mb-1 relative z-10">
+                  <div className="h-12 md:h-20 flex items-end justify-center mb-0 md:mb-1">
                     {settings.signatureImage ? (
-                      <img src={settings.signatureImage} alt="Tanda Tangan" className="h-16 md:h-24 object-contain mix-blend-multiply transform translate-y-1 md:translate-y-2 drop-shadow-sm" />
+                      <img src={settings.signatureImage} alt="Tanda Tangan" className="h-16 md:h-24 object-contain mix-blend-multiply transform translate-y-1 md:translate-y-2" />
                     ) : (
                       <span className="font-['Brush_Script_MT',cursive,serif] text-2xl md:text-4xl text-slate-700 opacity-80 -rotate-6 transform translate-y-1">Ttd.</span>
                     )}
                   </div>
-                  <div className="border-b-2 border-slate-400 w-32 md:w-48 mb-1 relative z-10"></div>
-                  <p className="text-[8px] md:text-xs font-bold text-slate-800 uppercase tracking-wider relative z-10">{settings.instructorName}</p>
-                  <p className="text-[7px] md:text-[9px] text-slate-500 font-semibold relative z-10">Instruktur Utama</p>
+                  <div className="border-b-2 border-slate-400 w-32 md:w-48 mb-1"></div>
+                  <p className="text-[8px] md:text-xs font-bold text-slate-800 uppercase tracking-wider">{settings.instructorName}</p>
+                  <p className="text-[7px] md:text-[9px] text-slate-500 font-semibold">Instruktur Utama</p>
                 </div>
                 
                 <div className="text-center flex flex-col items-center">
