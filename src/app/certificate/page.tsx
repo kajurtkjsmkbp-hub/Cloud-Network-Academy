@@ -130,23 +130,23 @@ export default function CertificatePage() {
               <div className="w-full flex justify-between items-end px-2 md:px-8 mt-1">
                 <div className="text-center flex flex-col items-center relative">
                   
-                  {/* STEMPEL CSS MIKROTIK ACADEMY */}
-                  <div className="absolute opacity-[0.65] mix-blend-multiply -rotate-12 pointer-events-none z-0" style={{ left: '10%', top: '-30%' }}>
-                    <div className="w-20 h-20 md:w-28 md:h-28 rounded-full border-[3px] md:border-[4px] border-indigo-700 flex items-center justify-center relative">
-                      <div className="absolute inset-[2px] md:inset-1 border border-indigo-700 rounded-full"></div>
-                      <div className="absolute inset-[4px] md:inset-2 border-[0.5px] border-indigo-700 border-dashed rounded-full"></div>
-                      <div className="text-center transform -rotate-6">
-                        <p className="text-[6px] md:text-[8px] font-bold text-indigo-700 uppercase tracking-widest">MikroTik</p>
-                        <p className="text-[10px] md:text-[14px] font-black text-indigo-800 uppercase leading-none my-0.5">ACADEMY</p>
-                        <div className="w-[80%] mx-auto border-t-[1.5px] border-indigo-700 my-[2px]"></div>
-                        <p className="text-[5px] md:text-[7px] font-bold text-indigo-700 uppercase tracking-wider">Instructor</p>
-                      </div>
-                    </div>
+                  {/* STEMPEL MIKROTIK ACADEMY */}
+                  <div className="absolute opacity-60 pointer-events-none z-0" style={{ left: '-5%', top: '-45%' }}>
+                    <svg viewBox="0 0 120 120" className="w-24 h-24 md:w-32 md:h-32 text-indigo-700 transform -rotate-12 mix-blend-multiply">
+                      <circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" strokeWidth="3" />
+                      <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
+                      
+                      <text x="60" y="52" fontSize="12" fontWeight="900" fill="currentColor" textAnchor="middle" letterSpacing="1">MIKROTIK</text>
+                      <text x="60" y="68" fontSize="16" fontWeight="900" fill="currentColor" textAnchor="middle" letterSpacing="1">ACADEMY</text>
+                      
+                      <line x1="25" y1="78" x2="95" y2="78" stroke="currentColor" strokeWidth="1.5" />
+                      <text x="60" y="90" fontSize="8" fontWeight="bold" fill="currentColor" textAnchor="middle" letterSpacing="2">INSTRUCTOR</text>
+                    </svg>
                   </div>
                   
                   <div className="h-10 md:h-14 flex items-end justify-center mb-1 relative z-10">
                     {settings.signatureImage ? (
-                      <img src={settings.signatureImage} alt="Tanda Tangan" className="h-10 md:h-12 object-contain" />
+                      <img src={settings.signatureImage} alt="Tanda Tangan" className="h-12 md:h-16 object-contain mix-blend-multiply" />
                     ) : (
                       <span className="font-['Brush_Script_MT',cursive,serif] text-xl md:text-3xl text-slate-700 opacity-80 -rotate-6">Ttd.</span>
                     )}
